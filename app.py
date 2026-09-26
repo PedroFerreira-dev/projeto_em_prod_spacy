@@ -1,5 +1,17 @@
+import os
+
 import requests
 import streamlit as st
+
+
+# ============================================================
+# CONFIGURAÇÃO DA API
+# ============================================================
+
+API_URL = os.getenv(
+    "API_URL",
+    "http://127.0.0.1:5000/analisar"
+)
 
 
 # ============================================================
@@ -21,14 +33,14 @@ st.title("📝 Sistema de Análise de Textos")
 
 st.write(
     """
-    Sistema de análise de mensagens de clientes
+    Sistema simples para análise de mensagens de clientes
     utilizando spaCy, TensorFlow, Flask e Streamlit.
     """
 )
 
 
 # ============================================================
-# CAMPO DE TEXTO
+# CAMPO PARA DIGITAR O TEXTO
 # ============================================================
 
 texto = st.text_area(
@@ -41,7 +53,7 @@ texto = st.text_area(
 
 
 # ============================================================
-# BOTÃO
+# BOTÃO DE ANÁLISE
 # ============================================================
 
 if st.button("Analisar texto"):
@@ -56,19 +68,26 @@ if st.button("Analisar texto"):
 
         try:
 
-            # Envia o texto para o Flask.
             resposta = requests.post(
-                "http://127.0.0.1:5000/analisar",
+                API_URL,
                 json={
                     "texto": texto
-                }
+                },
+                timeout=120
             )
 
-            # Verifica se a API respondeu corretamente.
             if resposta.status_code != 200:
 
+                try:
+                    erro = resposta.json().get(
+                        "erro",
+                        "Erro desconhecido."
+                    )
+                except Exception:
+                    erro = "Erro desconhecido."
+
                 st.error(
-                    "Erro ao realizar a análise."
+                    f"Erro ao realizar a análise: {erro}"
                 )
 
             else:
@@ -86,7 +105,7 @@ if st.button("Analisar texto"):
                 )
 
                 # ====================================================
-                # 2. STOPWORDS
+                # 2. REMOÇÃO DE STOPWORDS
                 # ====================================================
 
                 st.subheader(
@@ -98,7 +117,7 @@ if st.button("Analisar texto"):
                 )
 
                 # ====================================================
-                # 3. FREQUÊNCIA
+                # 3. FREQUÊNCIA DAS PALAVRAS
                 # ====================================================
 
                 st.subheader(
@@ -110,7 +129,7 @@ if st.button("Analisar texto"):
                 )
 
                 # ====================================================
-                # 4. NEGATIVAS
+                # 4. PALAVRAS NEGATIVAS
                 # ====================================================
 
                 st.subheader(
@@ -135,7 +154,7 @@ if st.button("Analisar texto"):
                     )
 
                 # ====================================================
-                # 5. SENTIMENTO
+                # 5. SENTIMENTO POR REGRAS
                 # ====================================================
 
                 st.subheader(
@@ -143,7 +162,7 @@ if st.button("Analisar texto"):
                 )
 
                 st.info(
-                    "Classificação: "
+                    f"Classificação: "
                     f"{resultado['sentimento_regras']}"
                 )
 
@@ -199,7 +218,7 @@ if st.button("Analisar texto"):
                     )
 
                 # ====================================================
-                # 8. SETOR
+                # 8. CLASSIFICAÇÃO DO SETOR
                 # ====================================================
 
                 st.subheader(
@@ -207,7 +226,7 @@ if st.button("Analisar texto"):
                 )
 
                 st.info(
-                    "Setor identificado: "
+                    f"Setor identificado: "
                     f"{resultado['setor']}"
                 )
 
@@ -224,30 +243,39 @@ if st.button("Analisar texto"):
                 )
 
                 # ====================================================
-                # 10. TENSORFLOW
+                # 10. ANÁLISE COM TENSORFLOW
                 # ====================================================
 
                 st.subheader(
                     "10. Análise com TensorFlow"
                 )
 
-                tensorflow = resultado[
-                    "tensorflow"
-                ]
+                tensorflow = resultado["tensorflow"]
 
                 st.write(
-                    "Sentimento previsto pelo modelo: "
+                    f"Sentimento previsto pelo modelo: "
                     f"**{tensorflow['sentimento']}**"
                 )
 
                 st.write(
-                    "Probabilidade positiva: "
+                    f"Probabilidade positiva: "
                     f"**{tensorflow['probabilidade_positiva']:.2%}**"
                 )
 
         except requests.exceptions.ConnectionError:
 
             st.error(
-                "Não foi possível conectar ao Flask. "
-                "Verifique se a API está sendo executada."
+                "Não foi possível conectar à API Flask."
+            )
+
+        except requests.exceptions.Timeout:
+
+            st.error(
+                "A API demorou muito para responder."
+            )
+
+        except requests.exceptions.RequestException as erro:
+
+            st.error(
+                f"Erro na comunicação com a API: {erro}"
             )

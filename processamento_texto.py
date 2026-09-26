@@ -1,4 +1,5 @@
 import re
+
 import spacy
 
 
@@ -6,8 +7,14 @@ import spacy
 # CARREGAMENTO DO MODELO spaCy
 # ============================================================
 
-nlp = spacy.load("pt_core_news_sm")
+nlp = spacy.load(
+    "pt_core_news_sm"
+)
 
+
+# ============================================================
+# NORMALIZAÇÃO
+# ============================================================
 
 def normalizar_texto(texto):
     """
@@ -15,33 +22,34 @@ def normalizar_texto(texto):
     e remove pontuações.
     """
 
-    # Converte todas as letras para minúsculas.
     texto = texto.lower()
 
-    # Remove pontuações e mantém letras,
-    # números e espaços.
-    texto = re.sub(r"[^\w\s]", "", texto)
+    texto = re.sub(
+        r"[^\w\s]",
+        "",
+        texto
+    )
 
     return texto
 
+
+# ============================================================
+# TOKENIZAÇÃO
+# ============================================================
 
 def tokenizar_texto(texto):
     """
     Divide o texto em palavras utilizando spaCy.
     """
 
-    # Primeiro normalizamos o texto.
     texto = normalizar_texto(texto)
 
-    # O spaCy transforma o texto em um Doc.
     documento = nlp(texto)
 
-    # Criamos uma lista contendo os tokens.
     tokens = []
 
     for token in documento:
 
-        # Ignora espaços.
         if token.is_space:
             continue
 
@@ -50,18 +58,24 @@ def tokenizar_texto(texto):
     return tokens
 
 
+# ============================================================
+# REMOÇÃO DE STOPWORDS
+# ============================================================
+
 def remover_stopwords(tokens):
     """
     Remove palavras muito comuns da língua portuguesa
-    utilizando a lista de stopwords do spaCy.
+    utilizando spaCy.
     """
 
     palavras_relevantes = []
 
     for palavra in tokens:
 
-        # O spaCy possui sua própria lista de stopwords.
         if not nlp.vocab[palavra].is_stop:
-            palavras_relevantes.append(palavra)
+
+            palavras_relevantes.append(
+                palavra
+            )
 
     return palavras_relevantes

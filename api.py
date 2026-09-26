@@ -1,3 +1,5 @@
+import os
+
 import tensorflow as tf
 
 from flask import Flask, request, jsonify
@@ -54,7 +56,7 @@ modelo = preparar_modelo()
 # ROTA PRINCIPAL
 # ============================================================
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def inicio():
 
     return jsonify({
@@ -72,15 +74,23 @@ def analisar():
     dados = request.get_json()
 
     if not dados:
+
         return jsonify({
             "erro": "Nenhum JSON foi enviado."
         }), 400
 
     texto = dados.get("texto")
 
-    if not texto:
+    if not texto or not isinstance(texto, str):
+
         return jsonify({
             "erro": "O campo 'texto' é obrigatório."
+        }), 400
+
+    if not texto.strip():
+
+        return jsonify({
+            "erro": "O texto não pode estar vazio."
         }), 400
 
     # ========================================================
@@ -96,7 +106,7 @@ def analisar():
     palavras_relevantes = remover_stopwords(tokens)
 
     # ========================================================
-    # 3. FREQUÊNCIA
+    # 3. FREQUÊNCIA DAS PALAVRAS
     # ========================================================
 
     frequencia = contar_frequencia(
@@ -134,7 +144,7 @@ def analisar():
     palavras_frequentes = frequencia.most_common(5)
 
     # ========================================================
-    # 8. SETOR
+    # 8. CLASSIFICAÇÃO DO SETOR
     # ========================================================
 
     setor = classificar_setor(
@@ -150,7 +160,7 @@ def analisar():
     )
 
     # ========================================================
-    # 10. TENSORFLOW
+    # 10. ANÁLISE COM TENSORFLOW
     # ========================================================
 
     entrada = tf.constant(
@@ -164,12 +174,15 @@ def analisar():
     ).numpy()[0][0]
 
     if previsao >= 0.5:
+
         resultado_modelo = "Positivo"
+
     else:
+
         resultado_modelo = "Negativo"
 
     # ========================================================
-    # RESPOSTA DA API
+    # RESPOSTA
     # ========================================================
 
     return jsonify({
@@ -188,7 +201,11 @@ def analisar():
 
         "palavras_chave": palavras_chave,
 
-        "palavras_frequentes": palavras_frequentes,
+        "palavras_frequentes": [
+            [palavra, quantidade]
+            for palavra, quantidade
+            in palavras_frequentes
+        ],
 
         "setor": setor,
 
@@ -207,8 +224,14 @@ def analisar():
 
 if __name__ == "__main__":
 
+    porta = int(
+        os.environ.get(
+            "PORT",
+            5000
+        )
+    )
+
     app.run(
-        host="127.0.0.1",
-        port=5000,
-        debug=True
+        host="0.0.0.0",
+        port=porta
     )

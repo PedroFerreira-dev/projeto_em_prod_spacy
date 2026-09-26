@@ -1,0 +1,21 @@
+services:
+
+  - type: web
+    name: analise-textos-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn api:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+
+  - type: web
+    name: analise-textos-streamlit
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.address 0.0.0.0 --server.port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: API_URL
+        sync: false

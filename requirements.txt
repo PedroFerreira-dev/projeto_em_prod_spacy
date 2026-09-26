@@ -1,0 +1,6 @@
+flask
+streamlit
+tensorflow
+pandas
+spacy
+requests

@@ -1,0 +1,11 @@
+texto,classe
+"Meu produto chegou muito rápido e estou muito satisfeito",positivo
+"Gostei bastante do atendimento e do produto",positivo
+"O produto é excelente e funciona muito bem",positivo
+"Estou satisfeito com a compra",positivo
+"Meu pagamento apresentou erro",negativo
+"O produto chegou quebrado e foi péssimo",negativo
+"Estou muito insatisfeito com o atendimento",negativo
+"O sistema está ruim e apresenta erro",negativo
+"Preciso cancelar minha compra",neutro
+"Tenho dúvidas sobre meu pagamento",neutro

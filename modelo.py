@@ -1,97 +1,69 @@
+import numpy as np
 import pandas as pd
 import tensorflow as tf
+from tensorflow.keras import Sequential
+from tensorflow.keras.layers import (
+    TextVectorization,
+    Embedding,
+    GlobalAveragePooling1D,
+    Dense
+)
 
 
-def carregar_dados():
-    """
-    Carrega os dados existentes no arquivo CSV.
-    """
-
-    dados = pd.read_csv("dados.csv")
-
-    return dados
+def carregar_dados(caminho="dados.csv"):
+    return pd.read_csv(caminho)
 
 
 def preparar_dados(dados):
-    """
-    Prepara os textos e transforma as classes
-    'positivo' e 'negativo' em números.
-    """
+    dados = dados[dados["classe"].isin(["positivo", "negativo"])].copy()
 
-    mapa_classes = {
-        "negativo": 0,
-        "positivo": 1
-    }
-
-    # Mantém somente as classes que o modelo
-    # consegue classificar.
-    dados = dados[
-        dados["classe"].isin(["positivo", "negativo"])
-    ].copy()
-
-    dados["classe"] = dados["classe"].map(mapa_classes)
-
-    textos = dados["texto"].astype(str).values
-    classes = dados["classe"].values
+    textos = dados["texto"].astype(str).to_numpy()
+    classes = (
+        dados["classe"]
+        .map({
+            "negativo": 0,
+            "positivo": 1
+        })
+        .astype(np.float32)
+        .to_numpy()
+    )
 
     return textos, classes
 
 
-def criar_modelo(textos):
-    """
-    Cria a rede neural responsável pela
-    classificação do sentimento.
-    """
-
-    vectorizer = tf.keras.layers.TextVectorization(
+def criar_modelo():
+    vetorizar = TextVectorization(
         max_tokens=1000,
         output_mode="int",
         output_sequence_length=20
     )
 
-    vectorizer.adapt(textos)
-
-    tamanho_vocabulario = len(
-        vectorizer.get_vocabulary()
-    )
-
-    modelo = tf.keras.Sequential([
-
-        vectorizer,
-
-        tf.keras.layers.Embedding(
-            input_dim=tamanho_vocabulario,
+    modelo = Sequential([
+        vetorizar,
+        Embedding(
+            input_dim=1000,
             output_dim=16
         ),
-
-        tf.keras.layers.GlobalAveragePooling1D(),
-
-        tf.keras.layers.Dense(
-            16,
-            activation="relu"
-        ),
-
-        tf.keras.layers.Dense(
-            1,
-            activation="sigmoid"
-        )
+        GlobalAveragePooling1D(),
+        Dense(16, activation="relu"),
+        Dense(1, activation="sigmoid")
     ])
-
-    return modelo
-
-
-def treinar_modelo(textos, classes):
-    """
-    Cria, compila e treina o modelo.
-    """
-
-    modelo = criar_modelo(textos)
 
     modelo.compile(
         optimizer="adam",
         loss="binary_crossentropy",
         metrics=["accuracy"]
     )
+
+    return modelo
+
+
+def treinar_modelo(textos, classes):
+    # Garante que o TensorFlow receba tipos compatíveis
+    textos = np.asarray(textos, dtype=str)
+    classes = np.asarray(classes, dtype=np.float32)
+
+    modelo = criar_modelo()
 
     modelo.fit(
         textos,

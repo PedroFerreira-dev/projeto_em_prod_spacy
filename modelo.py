@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import Sequential
@@ -15,17 +14,20 @@ def carregar_dados(caminho="dados.csv"):
 
 
 def preparar_dados(dados):
-    dados = dados[dados["classe"].isin(["positivo", "negativo"])].copy()
+    dados = dados[
+        dados["classe"].isin(["positivo", "negativo"])
+    ].copy()
 
-    textos = dados["texto"].astype(str).to_numpy()
+    textos = dados["texto"].astype(str).tolist()
+
     classes = (
         dados["classe"]
         .map({
             "negativo": 0,
             "positivo": 1
         })
-        .astype(np.float32)
-        .to_numpy()
+        .astype("float32")
+        .tolist()
     )
 
     return textos, classes
@@ -59,11 +61,21 @@ def criar_modelo():
 
 
 def treinar_modelo(textos, classes):
-    # Garante que o TensorFlow receba tipos compatíveis
-    textos = np.asarray(textos, dtype=str)
-    classes = np.asarray(classes, dtype=np.float32)
+
+    textos = tf.constant(
+        textos,
+        dtype=tf.string
+    )
+
+    classes = tf.constant(
+        classes,
+        dtype=tf.float32
+    )
 
     modelo = criar_modelo()
+
+    # Cria o vocabulário usando os textos de treinamento
+    modelo.layers[0].adapt(textos)
 
     modelo.fit(
         textos,
